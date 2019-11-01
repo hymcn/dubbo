@@ -29,7 +29,7 @@ import static org.apache.dubbo.common.serialize.Constants.KRYO_SERIALIZATION_ID;
 
 /**
  * TODO for now kryo serialization doesn't deny classes that don't implement the serializable interface
- *
+ *  [k'raɪəʊ] kryo基本解释 pref.表示“冰冷,严寒”之义
  * <pre>
  *     e.g. &lt;dubbo:protocol serialization="kryo" /&gt;
  * </pre>

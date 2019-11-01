@@ -12,4 +12,7 @@ public interface ExtService {
 
     @Adaptive("ext")
     String sayHi(URL url, String hi);
+
+    @Adaptive
+    String sayHi2(URL url, String hi);
 }

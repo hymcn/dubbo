@@ -12,4 +12,9 @@ public class Ext110 implements ExtService {
     public String sayHi(URL url, String hi) {
         return hi+ ", Ext110";
     }
+
+    @Override
+    public String sayHi2(URL url, String hi) {
+        return hi+ ", Ext110";
+    }
 }

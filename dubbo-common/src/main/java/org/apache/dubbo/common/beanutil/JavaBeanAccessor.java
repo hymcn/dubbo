@@ -19,8 +19,8 @@ package org.apache.dubbo.common.beanutil;
 public enum JavaBeanAccessor {
 
     /**
-     * Field accessor.
-     */
+            * Field accessor.
+            */
     FIELD,
     /**
      * Method accessor.

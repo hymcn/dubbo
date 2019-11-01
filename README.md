@@ -11,8 +11,41 @@
 
 SPI（Service Provider Interface）
 
+ExtentionLoader dubbo实现的一个动态扩展加载的机制
+用于类的加载、适配和实例化
 
-- 2. RPC
+通过SPI标注的接口可以动态的完成加载和适配
+SPI标注的代表的一类实现特定功能的服务接口，服务接口可能会有多种实现方式，这就涉及到系统中使用哪一种实现方式。
+
+1.实现SPI会指定默认的实现方式(getDefaultExtensionName)
+2.同时可以根据URL的参数动态的适配(getAdaptiveExtension),对应的注解@Adaptive
+
+ExtentionLoader机制在系统中多处使用，就Protocol，ProxyFactory做下简要说明
+Protocol默认为dubbo协议，export 和 refer没有指定适配参数，默认dubbo
+
+@SPI("dubbo")
+public interface Protocol {
+    @Adaptive
+    <T> Exporter<T> export(Invoker<T> invoker) throws RpcException;
+    @Adaptive
+    <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException;
+    void destroy();
+}
+
+
+ProxyFactory默认实现为javassist，具体方法通过{PROXY_KEY}也就是url中的proxy进行适配。
+@SPI("javassist")
+public interface ProxyFactory {
+    @Adaptive({PROXY_KEY})
+    <T> T getProxy(Invoker<T> invoker) throws RpcException;
+    @Adaptive({PROXY_KEY})
+    <T> T getProxy(Invoker<T> invoker, boolean generic) throws RpcException;
+    @Adaptive({PROXY_KEY})
+    <T> Invoker<T> getInvoker(T proxy, Class<T> type, URL url) throws RpcException;
+}
+
+
+- 2.RPC
 
 RPC(Remote Procedure Call)
 本地对象调用远程对象的方法，RPC现实调用远端方法和调用本地方法一样的感觉。
@@ -60,5 +93,66 @@ RPC技术简单说就是为了解决远程调用服务的一种技术，使得�
 9）client slub 从socket拿到消息
 10）client stub解包消息将结果返回给client。
 一个RPC框架就是把步骤2到9都封装起来。
+[参考连接](http://www.elecfans.com/d/906796.html)
 
-参考连接：http://www.elecfans.com/d/906796.html
+
+RPC的Echo服务实现
+
+服务提供端包含服务接口和具体实现，同时将服务暴露给外界使用，需要提供暴露的服务列表，因为是远端提供服务，需要提供相关服务提供者的ip和暴露端口。
+
+interface IEchoService{
+    Object echo(Object o);
+}
+
+class EchoService implements{
+    Object echo(Object o){
+        return o;
+    }
+}
+
+这里需要监听服务端口，处理网络请求，将相应的请求（IEchoService.echo）映射到相应的实现处理，将调用结果，写会。
+
+调用端（消费端）仅包含相关服务接口，同时需要知道相关服务的暴露地址。
+
+interface IEchoService{
+    Object echo(Object o);
+}
+
+调用端没有服务的具体实现，通过创建相应的代理对象，利用反射将调用方法的参数通过网络传输到服务端，完成方法调用。
+IEchoService stub = proxy(IEchoService)
+stub.echo()
+
+- 抽象（Invoker）
+
+dubbo的实现了满眼都是Invoker，它是触发者，调用者
+
+public interface Invoker<T> extends Node {
+
+    /**
+     * 调用哪个服务
+     *
+     * @return service interface.
+     */
+    Class<T> getInterface();
+
+    /**
+     * 执行调用 invocation中封装了方法和参数信息
+     *
+     * @param invocation
+     * @return result
+     * @throws RpcException
+     */
+    Result invoke(Invocation invocation) throws RpcException;
+
+    /**
+     * Node中属性，远程调用关联的URL，URL在dubbo中扮演着重要角色，每一个方法调用相关的信息都是通过泛化的URL来表示
+     *
+     * @return url.
+     */
+    URL getUrl();
+}
+
+
+所以接下来我们需要做的就是构建两端的invoker，
+
+先从服务端说起

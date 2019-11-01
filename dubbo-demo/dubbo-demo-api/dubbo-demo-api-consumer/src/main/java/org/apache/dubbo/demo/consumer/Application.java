@@ -31,6 +31,7 @@ public class Application {
     public static void main(String[] args) {
         ReferenceConfig<DemoService> reference = new ReferenceConfig<>();
         reference.setApplication(new ApplicationConfig("dubbo-demo-api-consumer"));
+//        reference.setRegistry(new RegistryConfig("injvm"));
         reference.setRegistry(new RegistryConfig("redis://127.0.0.1:6399"));
         reference.setInterface(DemoService.class);
         DemoService service = reference.get();
